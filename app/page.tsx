@@ -54,7 +54,7 @@ export default function ImageCarouselEditor() {
   };
   
   const exportJSON = () => {
-    const jsonOutput = JSON.stringify({ type, images: images.map((img, idx) => ({ ...img, index: idx })) }, null, 2);
+    const jsonOutput = JSON.stringify({ type, images: images.map((img, idx) => ({ ...img, index: idx })) });
     setJsonOutput(jsonOutput);
     console.log(jsonOutput);
   };
@@ -143,7 +143,7 @@ export default function ImageCarouselEditor() {
               </Button>
             </div>
             <pre className="whitespace-pre-wrap overflow-auto max-h-[300px] font-mono text-sm">
-              {jsonOutput}
+              {JSON.stringify(JSON.parse(jsonOutput), null, 2)}
             </pre>
           </CardContent>
         </Card>
