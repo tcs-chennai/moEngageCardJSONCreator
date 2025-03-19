@@ -21,35 +21,77 @@ export default function ImageCarouselEditor() {
   const [index, setIndex] = useState("");
   const [type, setType] = useState("carousel");
   const [jsonOutput, setJsonOutput] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   
-  const addImage = () => {
+  const isValidUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const verifyImageLoad = async (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  };
+
+  const addImage = async () => {
     if (newImage) {
-      const newImages = [...images];
-      
-      if (type === "single") {
-        // For single image type, always replace the current image
-        newImages.length = 0;
-        newImages.push({ url: newImage, caption: "", link: "" });
-      } else {
-        // For carousel type
-        if (index && index.trim() !== "") {
-          // If index is specified, insert at that position
-          const insertIndex = parseInt(index, 10);
-          if (!isNaN(insertIndex)) {
-            newImages.splice(insertIndex, 0, { url: newImage, caption: "", link: "" });
+      if (!isValidUrl(newImage)) {
+        toast.error("Please enter a valid image URL");
+        return;
+      }
+
+      setIsLoading(true);
+      setImageError("Verifying image...");
+
+      try {
+        const isImageLoadable = await verifyImageLoad(newImage);
+        if (!isImageLoadable) {
+          setImageError("Image failed to load. Please check the URL.");
+          setIsLoading(false);
+          return;
+        }
+
+        const newImages = [...images];
+        
+        if (type === "single") {
+          // For single image type, always replace the current image
+          newImages.length = 0;
+          newImages.push({ url: newImage, caption: "", link: "" });
+        } else {
+          // For carousel type
+          if (index && index.trim() !== "") {
+            // If index is specified, insert at that position
+            const insertIndex = parseInt(index, 10);
+            if (!isNaN(insertIndex)) {
+              newImages.splice(insertIndex, 0, { url: newImage, caption: "", link: "" });
+            } else {
+              // If index is invalid, add at the end
+              newImages.push({ url: newImage, caption: "", link: "" });
+            }
           } else {
-            // If index is invalid, add at the end
+            // If no index specified, add at the end
             newImages.push({ url: newImage, caption: "", link: "" });
           }
-        } else {
-          // If no index specified, add at the end
-          newImages.push({ url: newImage, caption: "", link: "" });
         }
+        
+        setImages(newImages);
+        setNewImage("");
+        setIndex("");
+        setImageError("");
+      } catch (error) {
+        setImageError("Failed to verify image. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
-      
-      setImages(newImages);
-      setNewImage("");
-      setIndex("");
     }
   };
   
@@ -70,10 +112,23 @@ export default function ImageCarouselEditor() {
   };
   
   const exportJSON = () => {
-    // Check if any image is missing a link
+    // Check if any image is missing a link or has invalid URLs
     const hasMissingLinks = images.some(img => !img.link.trim());
+    const hasInvalidLinks = images.some(img => !isValidUrl(img.link.trim()));
+    const hasInvalidImages = images.some(img => !isValidUrl(img.url));
+
     if (hasMissingLinks) {
       toast.error("Please add redirection links to all images before exporting");
+      return;
+    }
+
+    if (hasInvalidLinks) {
+      toast.error("Please ensure all redirection links are valid URLs");
+      return;
+    }
+
+    if (hasInvalidImages) {
+      toast.error("Please ensure all image URLs are valid");
       return;
     }
 
@@ -92,21 +147,36 @@ export default function ImageCarouselEditor() {
         </SelectContent>
       </Select>
 
-      <div className="flex space-x-2">
-        <Input
-          placeholder="Image URL"
-          value={newImage}
-          onChange={(e) => setNewImage(e.target.value)}
-        />
-        {type === "carousel" && (
+      <div className="flex flex-col space-y-2">
+        <div className="flex space-x-2">
           <Input
-            placeholder="Index"
-            type="number"
-            value={index}
-            onChange={(e) => setIndex(e.target.value)}
+            placeholder="Image URL"
+            value={newImage}
+            onChange={(e) => {
+              setNewImage(e.target.value);
+              if (e.target.value && !isValidUrl(e.target.value)) {
+                setImageError("Please enter a valid URL");
+              } else {
+                setImageError("");
+              }
+            }}
+            className={imageError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            disabled={isLoading}
           />
-        )}
-        <Button onClick={addImage}>Add Image</Button>
+          {type === "carousel" && (
+            <Input
+              placeholder="Index"
+              type="number"
+              value={index}
+              onChange={(e) => setIndex(e.target.value)}
+              disabled={isLoading}
+            />
+          )}
+          <Button onClick={addImage} disabled={isLoading}>
+            {isLoading ? "Verifying..." : "Add Image"}
+          </Button>
+        </div>
+        {imageError && <p className="text-sm text-red-500">{imageError}</p>}
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -120,6 +190,11 @@ export default function ImageCarouselEditor() {
                   fill
                   className="object-contain"
                   unoptimized
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    toast.error(`Failed to load image at index ${idx}`);
+                  }}
                 />
               </div>
               <Input
@@ -132,9 +207,12 @@ export default function ImageCarouselEditor() {
                 placeholder="Redirection Link *"
                 value={img.link}
                 onChange={(e) => updateLink(idx, e.target.value)}
-                className={`mt-2 ${!img.link.trim() ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={`mt-2 ${!img.link.trim() || !isValidUrl(img.link.trim()) ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 required
               />
+              {img.link.trim() && !isValidUrl(img.link.trim()) && (
+                <p className="text-sm text-red-500 mt-1">Please enter a valid URL</p>
+              )}
               <Button variant="ghost" onClick={() => removeImage(idx)} className="mt-2">
                 <Trash2 className="w-5 h-5" />
               </Button>
@@ -145,7 +223,7 @@ export default function ImageCarouselEditor() {
 
       <Button 
         onClick={exportJSON}
-        disabled={images.some(img => !img.link.trim())}
+        disabled={images.some(img => !img.link.trim() || !isValidUrl(img.link.trim()) || !isValidUrl(img.url))}
       >
         Export JSON
       </Button>
