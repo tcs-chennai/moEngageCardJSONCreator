@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { GeistSans, GeistMono } from 'geist/font'
 import "./globals.css";
 import { Toaster } from "sonner";
+import { Providers } from "./providers";
+import { Suspense } from "react";
 
 const geistSans = GeistSans;
 const geistMono = GeistMono;
@@ -17,11 +19,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >
-        {children}
+        <Suspense fallback={null}>
+          <Providers>
+            {children}
+          </Providers>
+        </Suspense>
         <Toaster />
       </body>
     </html>
