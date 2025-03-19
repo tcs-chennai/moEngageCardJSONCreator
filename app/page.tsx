@@ -25,12 +25,28 @@ export default function ImageCarouselEditor() {
   const addImage = () => {
     if (newImage) {
       const newImages = [...images];
-      if (type === "carousel" && index !== "") {
-        newImages.splice(parseInt(index, 10), 0, { url: newImage, caption: "", link: "" });
-      } else if (type === "single") {
-        newImages.length = 0; // Ensure only one image exists
+      
+      if (type === "single") {
+        // For single image type, always replace the current image
+        newImages.length = 0;
         newImages.push({ url: newImage, caption: "", link: "" });
+      } else {
+        // For carousel type
+        if (index && index.trim() !== "") {
+          // If index is specified, insert at that position
+          const insertIndex = parseInt(index, 10);
+          if (!isNaN(insertIndex)) {
+            newImages.splice(insertIndex, 0, { url: newImage, caption: "", link: "" });
+          } else {
+            // If index is invalid, add at the end
+            newImages.push({ url: newImage, caption: "", link: "" });
+          }
+        } else {
+          // If no index specified, add at the end
+          newImages.push({ url: newImage, caption: "", link: "" });
+        }
       }
+      
       setImages(newImages);
       setNewImage("");
       setIndex("");
@@ -54,7 +70,14 @@ export default function ImageCarouselEditor() {
   };
   
   const exportJSON = () => {
-    const jsonOutput = JSON.stringify({ type, images: images.map((img, idx) => ({ ...img, index: idx })) });
+    // Check if any image is missing a link
+    const hasMissingLinks = images.some(img => !img.link.trim());
+    if (hasMissingLinks) {
+      toast.error("Please add redirection links to all images before exporting");
+      return;
+    }
+
+    const jsonOutput = JSON.stringify({ type, content: images.map((img, idx) => ({ ...img })) });
     setJsonOutput(jsonOutput);
     console.log(jsonOutput);
   };
@@ -90,12 +113,12 @@ export default function ImageCarouselEditor() {
         {images.map((img, idx) => (
           <Card key={idx} className="relative">
             <CardContent className="flex flex-col items-center p-2">
-              <div className="relative w-full h-32">
+              <div className="relative w-full aspect-[16/9]">
                 <Image
                   src={img.url}
                   alt={`Image ${idx}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   unoptimized
                 />
               </div>
@@ -106,10 +129,11 @@ export default function ImageCarouselEditor() {
                 className="mt-2"
               />
               <Input
-                placeholder="Redirection Link"
+                placeholder="Redirection Link *"
                 value={img.link}
                 onChange={(e) => updateLink(idx, e.target.value)}
-                className="mt-2"
+                className={`mt-2 ${!img.link.trim() ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                required
               />
               <Button variant="ghost" onClick={() => removeImage(idx)} className="mt-2">
                 <Trash2 className="w-5 h-5" />
@@ -119,7 +143,12 @@ export default function ImageCarouselEditor() {
         ))}
       </div>
 
-      <Button onClick={exportJSON}>Export JSON</Button>
+      <Button 
+        onClick={exportJSON}
+        disabled={images.some(img => !img.link.trim())}
+      >
+        Export JSON
+      </Button>
 
       {jsonOutput && (
         <Card className="mt-4">
