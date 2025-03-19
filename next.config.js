@@ -4,8 +4,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: process.env.NODE_ENV === 'production' ? '/wysiwyg-editor' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/wysiwyg-editor/' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/moEngageCardJSONCreator' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/moEngageCardJSONCreator/' : '',
 };
 
-export default nextConfig;
+module.exports = nextConfig;
