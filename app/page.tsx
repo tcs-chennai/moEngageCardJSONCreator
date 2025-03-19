@@ -49,6 +49,13 @@ export default function ImageCarouselEditor() {
         return;
       }
 
+      // Check for duplicate images
+      const isDuplicate = images.some(img => img.url === newImage);
+      if (isDuplicate) {
+        toast.error("This image has already been added");
+        return;
+      }
+
       setIsLoading(true);
       setImageError("Verifying image...");
 
@@ -87,6 +94,7 @@ export default function ImageCarouselEditor() {
         setNewImage("");
         setIndex("");
         setImageError("");
+        toast.success("Image added successfully");
       } catch (error) {
         setImageError("Failed to verify image. Please try again.");
       } finally {
