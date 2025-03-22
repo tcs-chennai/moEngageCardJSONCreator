@@ -14,6 +14,9 @@ interface ImageItem {
   caption: string;
   link: string;
   index?: number;
+  aspectRatio: string;
+  displayAspectRatio: string;
+  bannerId: string;
 }
 
 export default function ImageCarouselEditor() {
@@ -22,7 +25,10 @@ export default function ImageCarouselEditor() {
   const [index, setIndex] = useState("");
   const [type, setType] = useState("carousel");
   const [position, setPosition] = useState("");
+  const [category, setCategory] = useState("luxury");
   const [pageId, setPageId] = useState("");
+  const [customPageId, setCustomPageId] = useState("");
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState("3:1");
   const [jsonOutput, setJsonOutput] = useState("");
   const [imageError, setImageError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +36,35 @@ export default function ImageCarouselEditor() {
   const [pageIdError, setPageIdError] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   
+  const luxuryPageIds = [
+    "men-home-page",
+    "women-home-page",
+    "the-watch-store",
+    "beauty-home-page",
+    "handbags-store",
+    "footwear-store",
+    "indiluxe",
+    "lifestyle-home-page",
+    "kids-clp",
+    "the-collective"
+  ];
+
+  const fashionPageIds = [
+    "beauty-homepage",
+    "women-homepage",
+    "footwear-homepage",
+    "men-homepage",
+    "westside/c-mbh11a00004",
+    "home-homepage",
+    "accessories-homepage",
+    "kids-homepage"
+  ];
+
+  const aspectRatioOptions = [
+    { value: "3:1", label: "3:1" },
+    { value: "5:1", label: "5:1" },
+  ];
+
   const isValidUrl = (url: string): boolean => {
     try {
       new URL(url);
@@ -46,6 +81,21 @@ export default function ImageCarouselEditor() {
       img.onerror = () => resolve(false);
       img.src = url;
     });
+  };
+
+  const calculateAspectRatio = (width: number, height: number): string => {
+    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(width, height);
+    const ratioWidth = Math.round(width / divisor);
+    const ratioHeight = Math.round(height / divisor);
+    return `${ratioWidth}:${ratioHeight}`;
+  };
+
+  const generateDefaultBannerId = (index: number): string => {
+    const finalPageId = pageId === "other" ? customPageId.trim() : pageId;
+    const positionNum = position.trim() || "0";
+    const carouselPosition = type === "carousel" ? `_${index}` : "";
+    return `${category}_${finalPageId}_${positionNum}${carouselPosition}`;
   };
 
   const addImage = async () => {
@@ -73,26 +123,51 @@ export default function ImageCarouselEditor() {
           return;
         }
 
+        // Get image dimensions
+        const img = new window.Image();
+        img.src = newImage;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+        const calculatedAspectRatio = calculateAspectRatio(img.width, img.height);
+
         const newImages = [...images];
+        const newIndex = type === "carousel" && index && index.trim() !== "" 
+          ? parseInt(index, 10) 
+          : newImages.length;
+        
+        const defaultBannerId = generateDefaultBannerId(newIndex);
         
         if (type === "single") {
-          // For single image type, always replace the current image
           newImages.length = 0;
-          newImages.push({ url: newImage, caption: "", link: "" });
+          newImages.push({ 
+            url: newImage, 
+            caption: "", 
+            link: "", 
+            aspectRatio: selectedAspectRatio,
+            displayAspectRatio: calculatedAspectRatio,
+            bannerId: defaultBannerId
+          });
         } else {
           // For carousel type
-          if (index && index.trim() !== "") {
-            // If index is specified, insert at that position
-            const insertIndex = parseInt(index, 10);
-            if (!isNaN(insertIndex)) {
-              newImages.splice(insertIndex, 0, { url: newImage, caption: "", link: "" });
-            } else {
-              // If index is invalid, add at the end
-              newImages.push({ url: newImage, caption: "", link: "" });
-            }
+          if (!isNaN(newIndex)) {
+            newImages.splice(newIndex, 0, { 
+              url: newImage, 
+              caption: "", 
+              link: "", 
+              aspectRatio: selectedAspectRatio,
+              displayAspectRatio: calculatedAspectRatio,
+              bannerId: defaultBannerId
+            });
           } else {
-            // If no index specified, add at the end
-            newImages.push({ url: newImage, caption: "", link: "" });
+            newImages.push({ 
+              url: newImage, 
+              caption: "", 
+              link: "", 
+              aspectRatio: selectedAspectRatio,
+              displayAspectRatio: calculatedAspectRatio,
+              bannerId: defaultBannerId
+            });
           }
         }
         
@@ -129,30 +204,97 @@ export default function ImageCarouselEditor() {
     setHasChanges(true);
   };
 
+  const updateBannerId = (idx: number, bannerId: string) => {
+    const newImages = [...images];
+    // Check if the banner ID is already used by another image
+    const isDuplicate = images.some((img, i) => 
+      i !== idx && img.bannerId.trim() === bannerId.trim()
+    );
+    newImages[idx].bannerId = bannerId;
+    setImages(newImages);
+    setHasChanges(true);
+    return isDuplicate;
+  };
+
   const handleTypeChange = (value: string) => {
     setType(value);
     setHasChanges(true);
   };
 
   const handlePositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPosition(e.target.value);
+    const newPosition = e.target.value;
+    setPosition(newPosition);
     setHasChanges(true);
-    if (!e.target.value.trim()) {
+    
+    // Update validation
+    if (!newPosition.trim()) {
       setPositionError("Position is required");
-    } else if (isNaN(parseInt(e.target.value, 10))) {
+    } else if (isNaN(parseInt(newPosition, 10))) {
       setPositionError("Position must be a number");
+    } else if (parseInt(newPosition, 10) < 0) {
+      setPositionError("Position cannot be negative");
     } else {
       setPositionError("");
+      
+      // Update Banner IDs for all images with new position
+      const newImages = images.map((img, idx) => ({
+        ...img,
+        bannerId: `${category}_${pageId === "other" ? customPageId.trim() : pageId}_${newPosition.trim()}${type === "carousel" ? `_${idx}` : ""}`
+      }));
+      setImages(newImages);
     }
   };
 
-  const handlePageIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPageId(e.target.value);
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    setPageId("");
+    setCustomPageId("");
     setHasChanges(true);
-    if (!e.target.value.trim()) {
+    
+    // Update Banner IDs for all images with new category and empty pageId
+    const newImages = images.map((img, idx) => ({
+      ...img,
+      bannerId: `${value}_${position.trim() || "0"}${type === "carousel" ? `_${idx}` : ""}`
+    }));
+    setImages(newImages);
+  };
+
+  const handlePageIdChange = (value: string) => {
+    setPageId(value);
+    setHasChanges(true);
+    
+    if (value === "other") {
+      setPageIdError("");
+    } else if (!value) {
       setPageIdError("Page ID is required");
     } else {
       setPageIdError("");
+      
+      // Update Banner IDs for all images with new page ID
+      const newImages = images.map((img, idx) => ({
+        ...img,
+        bannerId: `${category}_${value}_${position.trim() || "0"}${type === "carousel" ? `_${idx}` : ""}`
+      }));
+      setImages(newImages);
+    }
+  };
+
+  const handleCustomPageIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCustomPageId = e.target.value;
+    setCustomPageId(newCustomPageId);
+    setHasChanges(true);
+    
+    if (!newCustomPageId.trim()) {
+      setPageIdError("Page ID is required");
+    } else {
+      setPageIdError("");
+      
+      // Update Banner IDs for all images with new custom page ID
+      const newImages = images.map((img, idx) => ({
+        ...img,
+        bannerId: `${category}_${newCustomPageId.trim()}_${position.trim() || "0"}${type === "carousel" ? `_${idx}` : ""}`
+      }));
+      setImages(newImages);
     }
   };
 
@@ -170,15 +312,34 @@ export default function ImageCarouselEditor() {
     }
 
     // Check if pageId is valid
-    if (!pageId.trim()) {
+    const finalPageId = pageId === "other" ? customPageId.trim() : pageId;
+    if (!finalPageId) {
       toast.error("Please enter a page ID");
       return;
     }
 
-    // Check if any image is missing a link or has invalid URLs
+    // Check if any image is missing a link, banner ID, or has invalid URLs
     const hasMissingLinks = images.some(img => !img.link.trim());
+    const hasMissingBannerIds = images.some(img => !img.bannerId.trim());
+    const hasDuplicateBannerIds = images.some((img, idx) => 
+      images.some((otherImg, otherIdx) => 
+        idx !== otherIdx && 
+        img.bannerId.trim() === otherImg.bannerId.trim() && 
+        img.bannerId.trim() !== ""
+      )
+    );
     const hasInvalidLinks = images.some(img => !isValidUrl(img.link.trim()));
     const hasInvalidImages = images.some(img => !isValidUrl(img.url));
+
+    if (hasMissingBannerIds) {
+      toast.error("Please add Banner IDs to all images before exporting");
+      return;
+    }
+
+    if (hasDuplicateBannerIds) {
+      toast.error("Each image must have a unique Banner ID");
+      return;
+    }
 
     if (hasMissingLinks) {
       toast.error("Please add redirection links to all images before exporting");
@@ -198,8 +359,15 @@ export default function ImageCarouselEditor() {
     const jsonOutput = JSON.stringify({ 
       type, 
       position: positionNum,
-      pageId: pageId.trim(),
-      content: images.map((img, idx) => ({ ...img })) 
+      pageId: finalPageId,
+      aspectRatio: selectedAspectRatio,
+      content: images.map((img, idx) => ({ 
+        url: img.url,
+        caption: img.caption,
+        link: img.link,
+        index: img.index,
+        bannerId: img.bannerId
+      })) 
     });
     setJsonOutput(jsonOutput);
     setHasChanges(false);
@@ -207,15 +375,46 @@ export default function ImageCarouselEditor() {
   };
 
   const isFormValid = () => {
+    const finalPageId = pageId === "other" ? customPageId.trim() : pageId;
+    const hasDuplicateBannerIds = images.some((img, idx) => 
+      images.some((otherImg, otherIdx) => 
+        idx !== otherIdx && 
+        img.bannerId.trim() === otherImg.bannerId.trim() && 
+        img.bannerId.trim() !== ""
+      )
+    );
     return position.trim() && 
            !isNaN(parseInt(position, 10)) && 
-           pageId.trim() &&
+           finalPageId &&
            images.length > 0 && 
-           !images.some(img => !img.link.trim() || !isValidUrl(img.link.trim()) || !isValidUrl(img.url));
+           !images.some(img => 
+             !img.link.trim() || 
+             !img.bannerId.trim() ||
+             !isValidUrl(img.link.trim()) || 
+             !isValidUrl(img.url)
+           ) &&
+           !hasDuplicateBannerIds;
+  };
+
+  const hasInconsistentAspectRatios = () => {
+    if (images.length <= 1) return false;
+    const firstAspectRatio = images[0].displayAspectRatio;
+    return images.some(img => img.displayAspectRatio !== firstAspectRatio);
+  };
+
+  const hasAspectRatioMismatch = (img: ImageItem) => {
+    return img.displayAspectRatio !== img.aspectRatio;
   };
 
   return (
     <div className="p-4 space-y-4">
+      {hasInconsistentAspectRatios() && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Warning: </strong>
+          <span className="block sm:inline">Images have different aspect ratios. This may affect the display consistency.</span>
+        </div>
+      )}
+      
       <div className="flex gap-4 items-start">
         <Select onValueChange={handleTypeChange} value={type}>
           <SelectTrigger>Type: {type}</SelectTrigger>
@@ -233,6 +432,7 @@ export default function ImageCarouselEditor() {
                 id="position"
                 placeholder="Position on page *"
                 type="number"
+                min="0"
                 value={position}
                 onChange={handlePositionChange}
                 className={positionError ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -244,17 +444,67 @@ export default function ImageCarouselEditor() {
 
           <div className="flex flex-col space-y-1">
             <div className="space-y-1.5">
-              {pageId && <Label htmlFor="pageId">Page ID *</Label>}
-              <Input
-                id="pageId"
-                placeholder="Page ID *"
-                value={pageId}
-                onChange={handlePageIdChange}
-                className={pageIdError ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                required
-              />
+              <Label htmlFor="category">For App</Label>
+              <Select onValueChange={handleCategoryChange} value={category}>
+                <SelectTrigger>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="luxury">Luxury</SelectItem>
+                  <SelectItem value="fashion">Fashion</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="flex flex-col space-y-1">
+            <div className="space-y-1.5">
+              {pageId && <Label htmlFor="pageId">Page ID *</Label>}
+              <Select onValueChange={handlePageIdChange} value={pageId}>
+                <SelectTrigger className={pageIdError ? 'border-red-500 focus-visible:ring-red-500' : ''}>
+                  {pageId === "other" ? "Other" : pageId || "Select Page ID *"}
+                </SelectTrigger>
+                <SelectContent>
+                  {(category === "luxury" ? luxuryPageIds : fashionPageIds).map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {id}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {pageId === "other" && (
+              <div className="space-y-1.5">
+                <Input
+                  id="customPageId"
+                  placeholder="Enter custom Page ID *"
+                  value={customPageId}
+                  onChange={handleCustomPageIdChange}
+                  className={pageIdError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  required
+                />
+              </div>
+            )}
             {pageIdError && <p className="text-sm text-red-500">{pageIdError}</p>}
+          </div>
+
+          <div className="flex flex-col space-y-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="aspectRatio">Display Aspect Ratio</Label>
+              <Select onValueChange={setSelectedAspectRatio} value={selectedAspectRatio}>
+                <SelectTrigger>
+                  {selectedAspectRatio}
+                </SelectTrigger>
+                <SelectContent>
+                  {aspectRatioOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
@@ -286,8 +536,14 @@ export default function ImageCarouselEditor() {
                 id="index"
                 placeholder="Index"
                 type="number"
+                min="0"
                 value={index}
-                onChange={(e) => setIndex(e.target.value)}
+                onChange={(e) => {
+                  const newIndex = e.target.value;
+                  if (newIndex === "" || parseInt(newIndex, 10) >= 0) {
+                    setIndex(newIndex);
+                  }
+                }}
                 disabled={isLoading}
               />
             </div>
@@ -303,19 +559,65 @@ export default function ImageCarouselEditor() {
         {images.map((img, idx) => (
           <Card key={idx} className="relative">
             <CardContent className="flex flex-col items-center p-2">
-              <div className="relative w-full aspect-[16/9]">
+              <div className="relative w-full h-[300px]">
                 <Image
                   src={img.url}
                   alt={`Image ${idx}`}
                   fill
                   className="object-contain"
-                  unoptimized
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     toast.error(`Failed to load image at index ${idx}`);
                   }}
                 />
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Original Aspect Ratio: {img.displayAspectRatio}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Selected Aspect Ratio: {img.aspectRatio}
+              </div>
+              {hasAspectRatioMismatch(img) && (
+                <div className="text-xs text-yellow-600 mt-1">
+                  ⚠️ Warning: Selected aspect ratio doesn't match image's original aspect ratio
+                </div>
+              )}
+              <div className="w-full space-y-1.5 mt-2">
+                {img.bannerId && <Label htmlFor={`bannerId-${idx}`}>Banner ID *</Label>}
+                <Input
+                  id={`bannerId-${idx}`}
+                  placeholder="Banner ID *"
+                  value={img.bannerId}
+                  onChange={(e) => {
+                    const isDuplicate = updateBannerId(idx, e.target.value);
+                    if (isDuplicate) {
+                      toast.error("This Banner ID is already in use");
+                    }
+                  }}
+                  className={`${
+                    !img.bannerId.trim() || 
+                    images.some((otherImg, otherIdx) => 
+                      idx !== otherIdx && 
+                      img.bannerId.trim() === otherImg.bannerId.trim() && 
+                      img.bannerId.trim() !== ""
+                    ) 
+                      ? 'border-red-500 focus-visible:ring-red-500' 
+                      : ''
+                  }`}
+                  required
+                />
+                {!img.bannerId.trim() && (
+                  <p className="text-sm text-red-500">Banner ID is required</p>
+                )}
+                {images.some((otherImg, otherIdx) => 
+                  idx !== otherIdx && 
+                  img.bannerId.trim() === otherImg.bannerId.trim() && 
+                  img.bannerId.trim() !== ""
+                ) && (
+                  <p className="text-sm text-red-500">This Banner ID is already in use</p>
+                )}
               </div>
               <div className="w-full space-y-1.5 mt-2">
                 {img.caption && <Label htmlFor={`caption-${idx}`}>Caption</Label>}
