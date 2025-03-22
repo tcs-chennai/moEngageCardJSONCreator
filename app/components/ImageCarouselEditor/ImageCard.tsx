@@ -88,6 +88,16 @@ export const ImageCard: React.FC<ImageCardProps> = ({
             className={`${!img.link.trim() || !isValidUrl(img.link.trim()) ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             required
           />
+          {img.link.trim() && isValidUrl(img.link.trim()) && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => window.open(img.link, '_blank')}
+            >
+              Preview Link
+            </Button>
+          )}
         </div>
         {img.link.trim() && !isValidUrl(img.link.trim()) && (
           <p className="text-sm text-red-500 mt-1">Please enter a valid URL</p>

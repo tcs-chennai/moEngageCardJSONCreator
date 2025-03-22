@@ -19,7 +19,7 @@ export const ImageForm: React.FC<ImageFormProps> = ({
 }) => {
   return (
     <div className="flex flex-col space-y-2">
-      <div className="flex space-x-2">
+      <div className="flex gap-2 items-start">
         <div className="flex-1 space-y-1.5">
           {newImage && <Label htmlFor="imageUrl">Image URL</Label>}
           <Input
@@ -39,7 +39,7 @@ export const ImageForm: React.FC<ImageFormProps> = ({
           />
         </div>
         {type === "carousel" && (
-          <div className="space-y-1.5">
+          <div className="w-20 space-y-1.5">
             {index && <Label htmlFor="index">Index</Label>}
             <Input
               id="index"
@@ -57,9 +57,11 @@ export const ImageForm: React.FC<ImageFormProps> = ({
             />
           </div>
         )}
-        <Button onClick={onAddImage} disabled={isLoading}>
-          {isLoading ? "Verifying..." : "Add Image"}
-        </Button>
+        <div className="min-w-[100px] space-y-1.5 flex items-end">
+          <Button onClick={onAddImage} disabled={isLoading} className="w-full h-10">
+            {isLoading ? "Verifying..." : "Add Image"}
+          </Button>
+        </div>
       </div>
       {imageError && <p className="text-sm text-red-500">{imageError}</p>}
     </div>

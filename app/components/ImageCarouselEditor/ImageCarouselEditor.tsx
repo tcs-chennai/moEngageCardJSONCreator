@@ -8,6 +8,8 @@ import { ImageForm } from "./ImageForm";
 import { TopControls } from "./TopControls";
 import { JsonOutput } from "./JsonOutput";
 import { isValidUrl, verifyImageLoad, calculateAspectRatio } from "./utils";
+import { Dialog, DialogContent } from "../ui/dialog";
+import { MobilePreview } from "./MobilePreview";
 
 export const ImageCarouselEditor: React.FC = () => {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -25,6 +27,7 @@ export const ImageCarouselEditor: React.FC = () => {
   const [positionError, setPositionError] = useState("");
   const [pageIdError, setPageIdError] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   const luxuryPageIds = [
     "men-home-page",
@@ -399,6 +402,10 @@ export const ImageCarouselEditor: React.FC = () => {
     );
   };
 
+  const handlePreview = () => {
+    setShowPreview(true);
+  };
+
   return (
     <div className="p-4 space-y-4">
       {hasInconsistentAspectRatios() && (
@@ -441,7 +448,7 @@ export const ImageCarouselEditor: React.FC = () => {
         isValidUrl={isValidUrl}
       />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {images.map((img, idx) => (
           <ImageCard
             key={idx}
@@ -458,12 +465,39 @@ export const ImageCarouselEditor: React.FC = () => {
         ))}
       </div>
 
-      <Button 
-        onClick={exportJSON}
-        disabled={!isFormValid()}
-      >
-        Export JSON
-      </Button>
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setImages([]);
+            setType("carousel");
+            setPosition("");
+            setCategory("luxury");
+            setPageId("");
+            setCustomPageId("");
+            setSelectedAspectRatio("3:1");
+            setPositionError("");
+            setPageIdError("");
+          }}
+        >
+          Reset
+        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handlePreview}
+            disabled={images.length === 0}
+          >
+            Preview
+          </Button>
+          <Button
+            onClick={exportJSON}
+            disabled={!isFormValid() || !hasInconsistentAspectRatios()}
+          >
+            Export JSON
+          </Button>
+        </div>
+      </div>
 
       {jsonOutput && !hasChanges && (
         <JsonOutput
@@ -473,6 +507,12 @@ export const ImageCarouselEditor: React.FC = () => {
           }}
         />
       )}
+
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-[391px] h-[90vh] p-2 bg-[#f5f5f5]">
+          <MobilePreview images={images} type={type} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }; 
