@@ -7,7 +7,26 @@ on:
     branches: [ main ]
 
 jobs:
+  check_commit_message:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Check commit message
+        id: check
+        run: |
+          if git log -1 --pretty=%B | grep -q "\[run test\]"; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
   test:
+    needs: check_commit_message
+    if: needs.check_commit_message.outputs.should_run == 'true'
     runs-on: ubuntu-latest
 
     steps:

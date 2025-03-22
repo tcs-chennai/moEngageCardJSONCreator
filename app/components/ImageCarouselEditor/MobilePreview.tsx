@@ -64,6 +64,13 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
     return img.displayAspectRatio !== img.aspectRatio;
   };
 
+  const getAspectRatioStyle = (aspectRatio: string) => {
+    const [width, height] = aspectRatio.split(':').map(Number);
+    return {
+      paddingTop: `${(height / width) * 100}%`
+    };
+  };
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Mobile frame */}
@@ -74,9 +81,10 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
         </div>
 
         {/* Content */}
-        <div className="relative h-[400px] mt-4 bg-gray-900">
+        <div className="relative mt-4 bg-gray-900">
           <div 
-            className="relative w-full h-full"
+            className="relative w-full"
+            style={getAspectRatioStyle(images[currentIndex].aspectRatio)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -84,7 +92,7 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
             {images.map((image, index) => (
               <div
                 key={index}
-                className={`absolute top-0 left-0 w-full h-full transition-opacity duration-300 flex items-center justify-center ${
+                className={`absolute inset-0 transition-opacity duration-300 flex items-center justify-center overflow-hidden ${
                   index === currentIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
               >
@@ -92,7 +100,7 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
                   src={image.url}
                   alt={`Slide ${index}`}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   sizes="375px"
                 />
                 {image.caption && (
@@ -109,7 +117,7 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white z-10"
                 onClick={handlePrev}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -117,12 +125,12 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-white/80 hover:bg-white z-10"
                 onClick={handleNext}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1">
+              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex gap-1">
                 {images.map((_, index) => (
                   <div
                     key={index}
@@ -137,7 +145,7 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
         </div>
 
         {(hasInconsistentAspectRatios() || hasAspectRatioMismatch(images[currentIndex])) && (
-          <div className="px-4 py-2 mt-2 text-sm">
+          <div className="px-4 py-2 mt-8 text-sm">
             <p className="text-yellow-600 font-medium">⚠️ Aspect Ratio Issues:</p>
             {hasInconsistentAspectRatios() && (
               <p className="text-gray-600 mt-1">• Images have different aspect ratios which may cause inconsistent display</p>
