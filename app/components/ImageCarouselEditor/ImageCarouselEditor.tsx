@@ -123,6 +123,10 @@ export const ImageCarouselEditor: React.FC = () => {
               displayAspectRatio: calculatedAspectRatio,
               bannerId: defaultBannerId
             });
+            // Update banner IDs for all images after insertion
+            newImages.forEach((img, idx) => {
+              img.bannerId = generateDefaultBannerId(idx);
+            });
           } else {
             newImages.push({ 
               url: newImage, 
@@ -150,7 +154,12 @@ export const ImageCarouselEditor: React.FC = () => {
   };
   
   const removeImage = (idx: number) => {
-    setImages(images.filter((_, i) => i !== idx));
+    const newImages = images.filter((_, i) => i !== idx);
+    // Update banner IDs for all remaining images
+    newImages.forEach((img, index) => {
+      img.bannerId = generateDefaultBannerId(index);
+    });
+    setImages(newImages);
     setHasChanges(true);
   };
   
@@ -260,6 +269,18 @@ export const ImageCarouselEditor: React.FC = () => {
       }));
       setImages(newImages);
     }
+  };
+
+  const handleAspectRatioChange = (value: string) => {
+    setSelectedAspectRatio(value);
+    setHasChanges(true);
+    
+    // Update aspect ratios for all images
+    const newImages = images.map(img => ({
+      ...img,
+      aspectRatio: value
+    }));
+    setImages(newImages);
   };
 
   const exportJSON = () => {
@@ -401,7 +422,7 @@ export const ImageCarouselEditor: React.FC = () => {
         onCustomPageIdChange={handleCustomPageIdChange}
         pageIdError={pageIdError}
         selectedAspectRatio={selectedAspectRatio}
-        onAspectRatioChange={setSelectedAspectRatio}
+        onAspectRatioChange={handleAspectRatioChange}
         luxuryPageIds={luxuryPageIds}
         fashionPageIds={fashionPageIds}
         aspectRatioOptions={aspectRatioOptions}

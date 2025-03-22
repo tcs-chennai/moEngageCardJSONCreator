@@ -92,7 +92,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
         {img.link.trim() && !isValidUrl(img.link.trim()) && (
           <p className="text-sm text-red-500 mt-1">Please enter a valid URL</p>
         )}
-        <Button variant="ghost" onClick={() => onRemove(idx)} className="mt-2">
+        <Button variant="ghost" onClick={() => onRemove(idx)} className="mt-2" aria-label="Delete image">
           <Trash2 className="w-5 h-5" />
         </Button>
       </CardContent>
