@@ -7,15 +7,14 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node minify.js",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug",
-    "minify": "node minify.js"
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
@@ -52,7 +51,6 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "terser": "^5.39.0",
     "typescript": "^5"
   }
 }
