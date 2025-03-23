@@ -406,6 +406,29 @@ export const ImageCarouselEditor: React.FC = () => {
     setShowPreview(true);
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    
+    if (draggedIdx === targetIdx) return;
+
+    const newImages = [...images];
+    const [draggedImage] = newImages.splice(draggedIdx, 1);
+    newImages.splice(targetIdx, 0, draggedImage);
+
+    // Update banner IDs for all images after reordering
+    newImages.forEach((img, idx) => {
+      img.bannerId = generateDefaultBannerId(idx);
+    });
+
+    setImages(newImages);
+    setHasChanges(true);
+  };
+
   return (
     <div className="p-4 space-y-4">
       {hasInconsistentAspectRatios() && (
@@ -448,20 +471,26 @@ export const ImageCarouselEditor: React.FC = () => {
         isValidUrl={isValidUrl}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {images.map((img, idx) => (
-          <ImageCard
+          <div
             key={idx}
-            img={img}
-            idx={idx}
-            onRemove={removeImage}
-            onUpdateCaption={updateCaption}
-            onUpdateLink={updateLink}
-            onUpdateBannerId={updateBannerId}
-            hasDuplicateBannerId={hasDuplicateBannerId}
-            hasAspectRatioMismatch={hasAspectRatioMismatch}
-            isValidUrl={isValidUrl}
-          />
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, idx)}
+          >
+            <ImageCard
+              key={idx}
+              img={img}
+              idx={idx}
+              onRemove={removeImage}
+              onUpdateCaption={updateCaption}
+              onUpdateLink={updateLink}
+              onUpdateBannerId={updateBannerId}
+              hasDuplicateBannerId={hasDuplicateBannerId}
+              hasAspectRatioMismatch={hasAspectRatioMismatch}
+              isValidUrl={isValidUrl}
+            />
+          </div>
         ))}
       </div>
 

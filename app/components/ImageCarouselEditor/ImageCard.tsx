@@ -21,8 +21,23 @@ export const ImageCard: React.FC<ImageCardProps> = ({
   isValidUrl
 }) => {
   return (
-    <Card className="relative">
+    <Card 
+      className="relative cursor-move" 
+      draggable="true"
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', idx.toString());
+        e.currentTarget.classList.add('opacity-50');
+      }}
+      onDragEnd={(e) => {
+        e.currentTarget.classList.remove('opacity-50');
+      }}
+    >
       <CardContent className="flex flex-col items-center p-2">
+        <div className="w-full flex justify-between items-center mb-2">
+          <div className="p-2 hover:bg-gray-100 rounded">
+            ⋮⋮
+          </div>
+        </div>
         <div className="relative w-full h-[300px]">
           <Image
             src={img.url}
