@@ -492,7 +492,7 @@ export const ImageCarouselEditor: React.FC = () => {
           </Button>
           <Button
             onClick={exportJSON}
-            disabled={!isFormValid() || !hasInconsistentAspectRatios()}
+            disabled={!isFormValid()}
           >
             Export JSON
           </Button>
