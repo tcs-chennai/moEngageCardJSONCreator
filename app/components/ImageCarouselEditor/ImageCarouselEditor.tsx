@@ -432,9 +432,19 @@ export const ImageCarouselEditor: React.FC = () => {
   return (
     <div className="p-4 space-y-4">
       {hasInconsistentAspectRatios() && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Warning: </strong>
-          <span className="block sm:inline">Images have different aspect ratios. This may affect the display consistency.</span>
+        <div className="flex justify-between items-center bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative sticky top-0 z-10" role="alert">
+          <div>
+            <strong className="font-bold">Warning: </strong>
+            <span className="block sm:inline">Images have different aspect ratios. This may affect the display consistency.</span>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handlePreview}
+            disabled={images.length === 0}
+            className="ml-4"
+          >
+            Preview
+          </Button>
         </div>
       )}
       
