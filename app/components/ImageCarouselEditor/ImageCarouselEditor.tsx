@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ImageItem, AspectRatioOption } from "./types";
@@ -28,6 +28,13 @@ export const ImageCarouselEditor: React.FC = () => {
   const [pageIdError, setPageIdError] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [jsonInput, setJsonInput] = useState("");
+  const [isJsonValid, setIsJsonValid] = useState(false);
+  const [showJsonInput, setShowJsonInput] = useState(false);
+  const [showCampaignSelect, setShowCampaignSelect] = useState(false);
+  const [campaigns, setCampaigns] = useState<{ name: string; data: string }[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
+  const [selectedView, setSelectedView] = useState<"create" | "importJson" | "importCampaign">("create");
   
   const luxuryPageIds = [
     "men-home-page",
@@ -349,17 +356,50 @@ export const ImageCarouselEditor: React.FC = () => {
       position: positionNum,
       pageId: finalPageId,
       aspectRatio: selectedAspectRatio,
-      content: images.map((img, idx) => ({ 
+      content: images.map((img) => ({ 
         url: img.url,
         caption: img.caption,
         link: img.link,
-        index: img.index,
         bannerId: img.bannerId
       })) 
     });
+
+    // Store the JSON in local storage
+    const campaignName = prompt("Enter a name for this campaign:");
+    if (campaignName) {
+      const existingCampaigns = JSON.parse(localStorage.getItem("campaigns") || "[]");
+      existingCampaigns.push({ name: campaignName, data: jsonOutput });
+      localStorage.setItem("campaigns", JSON.stringify(existingCampaigns));
+      setCampaigns(existingCampaigns); // Update the campaigns state
+      toast.success("Campaign exported successfully!");
+    }
+
     setJsonOutput(jsonOutput);
     setHasChanges(false);
     console.log(jsonOutput);
+  };
+
+  const handleImportCampaign = (campaignData: string) => {
+    try {
+      const jsonData = JSON.parse(campaignData);
+      // Populate the form with the imported data
+      setType(jsonData.type);
+      setPosition(jsonData.position.toString());
+      setPageId(jsonData.pageId);
+      setSelectedAspectRatio(jsonData.aspectRatio);
+      setImages(jsonData.content.map((img: any) => ({
+        url: img.url,
+        caption: img.caption,
+        link: img.link,
+        bannerId: img.bannerId,
+        aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
+        displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
+      })));
+      setHasChanges(true);
+      toast.success("Campaign imported successfully");
+    } catch (error) {
+      toast.error("Failed to import campaign. Please check the format.");
+    }
   };
 
   const isFormValid = () => {
@@ -429,6 +469,52 @@ export const ImageCarouselEditor: React.FC = () => {
     setHasChanges(true);
   };
 
+  const handleImportJSON = () => {
+    try {
+      // Parse the JSON string from the input
+      const jsonData = JSON.parse(JSON.parse(jsonInput.trim()));
+      console.log(jsonData);
+      // Populate the form with the imported data
+      setType(jsonData.type);
+      setPosition(jsonData.position.toString());
+      setPageId(jsonData.pageId);
+      setSelectedAspectRatio(jsonData.aspectRatio);
+      setImages(jsonData.content.map((img: any) => ({
+        url: img.url,
+        caption: img.caption,
+        link: img.link,
+        bannerId: img.bannerId,
+        aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
+        displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
+      })));
+      setHasChanges(true);
+      toast.success("JSON string imported successfully");
+
+      // Hide the JSON input field and button after successful import
+      setShowJsonInput(false);
+      setJsonInput(""); // Clear the input field
+    } catch (error) {
+      toast.error("Failed to import JSON string. Please check the format.");
+    }
+  };
+
+  // Effect to validate JSON input
+  useEffect(() => {
+    try {
+      // Check if the input is a valid JSON string
+      JSON.parse(jsonInput);
+      setIsJsonValid(true);
+    } catch {
+      setIsJsonValid(false);
+    }
+  }, [jsonInput]);
+
+  // Effect to load campaigns from local storage on component mount
+  useEffect(() => {
+    const storedCampaigns = JSON.parse(localStorage.getItem("campaigns") || "[]");
+    setCampaigns(storedCampaigns);
+  }, []);
+
   return (
     <div className="p-4 space-y-4">
       {hasInconsistentAspectRatios() && (
@@ -445,6 +531,78 @@ export const ImageCarouselEditor: React.FC = () => {
           >
             Preview
           </Button>
+        </div>
+      )}
+
+<div className="flex justify-between items-center mb-4">
+        <Button
+          variant={selectedView === "create" ? "default" : "secondary"}
+          onClick={() => setSelectedView("create")}
+        >
+          Create New
+        </Button>
+        <Button
+          variant={selectedView === "importJson" ? "default" : "secondary"}
+          onClick={() => {
+            setSelectedView("importJson");
+            setShowJsonInput(true);
+            setShowCampaignSelect(false);
+          }}
+        >
+          Import using JSON
+        </Button>
+        <Button
+          variant={selectedView === "importCampaign" ? "default" : "secondary"}
+          onClick={() => {
+            setSelectedView("importCampaign");
+            setShowCampaignSelect(true);
+            setShowJsonInput(false);
+          }}
+        >
+          Import Previously Created Campaigns
+        </Button>
+      </div>
+
+      {selectedView === "importJson" && showJsonInput && (
+        <div className="flex flex-col mt-4">
+          <textarea
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            placeholder="Paste your JSON string here"
+            rows={5}
+            className="border p-2 mb-2"
+          />
+          <Button
+            variant="outline"
+            onClick={handleImportJSON}
+            disabled={!isJsonValid}
+          >
+            Import JSON
+          </Button>
+        </div>
+      )}
+
+      {selectedView === "importCampaign" && showCampaignSelect && (
+        <div className="flex flex-col mt-4">
+          <h3 className="font-bold">Previously Created Campaigns</h3>
+          <select
+            value={selectedCampaign}
+            onChange={(e) => {
+              const campaign = campaigns.find(c => c.name === e.target.value);
+              if (campaign) {
+                handleImportCampaign(campaign.data);
+              }
+              setSelectedCampaign(e.target.value);
+            }}
+            className="border p-2 mb-2"
+          >
+            <option value="">Select a campaign to import</option>
+            {campaigns.map((campaign, idx) => (
+              <option key={idx} value={campaign.name}>
+                {campaign.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
       
@@ -468,18 +626,18 @@ export const ImageCarouselEditor: React.FC = () => {
         aspectRatioOptions={aspectRatioOptions}
       />
 
-      <ImageForm
-        newImage={newImage}
-        setNewImage={setNewImage}
-        index={index}
-        setIndex={setIndex}
-        type={type}
-        isLoading={isLoading}
-        imageError={imageError}
-        setImageError={setImageError}
-        onAddImage={addImage}
-        isValidUrl={isValidUrl}
-      />
+        <ImageForm
+          newImage={newImage}
+          setNewImage={setNewImage}
+          index={index}
+          setIndex={setIndex}
+          type={type}
+          isLoading={isLoading}
+          imageError={imageError}
+          setImageError={setImageError}
+          onAddImage={addImage}
+          isValidUrl={isValidUrl}
+        />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {images.map((img, idx) => (
@@ -530,7 +688,11 @@ export const ImageCarouselEditor: React.FC = () => {
             Preview
           </Button>
           <Button
-            onClick={exportJSON}
+            onClick={() => {
+              exportJSON();
+              navigator.clipboard.writeText(jsonOutput);
+              toast.success("JSON copied to clipboard!");
+            }}
             disabled={!isFormValid()}
           >
             Export JSON
