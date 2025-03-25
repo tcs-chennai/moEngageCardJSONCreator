@@ -22,7 +22,9 @@ export const TopControls: React.FC<TopControlsProps> = ({
   onAspectRatioChange,
   luxuryPageIds,
   fashionPageIds,
-  aspectRatioOptions
+  aspectRatioOptions,
+  priority,
+  onPriorityChange
 }) => {
   const [customPageIdSuggestions, setCustomPageIdSuggestions] = React.useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -144,6 +146,19 @@ export const TopControls: React.FC<TopControlsProps> = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="w-full sm:w-auto">
+        <Label htmlFor="priority">Priority (optional)</Label>
+        <Input
+          id="priority"
+          placeholder="Enter priority (0 or positive number)"
+          type="number"
+          min="0"
+          value={priority}
+          onChange={onPriorityChange}
+          className=""
+        />
       </div>
     </div>
   );

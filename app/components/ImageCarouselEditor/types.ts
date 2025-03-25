@@ -56,6 +56,8 @@ export interface TopControlsProps {
   luxuryPageIds: string[];
   fashionPageIds: string[];
   aspectRatioOptions: AspectRatioOption[];
+  priority: number | "";
+  onPriorityChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export interface JsonOutputProps {

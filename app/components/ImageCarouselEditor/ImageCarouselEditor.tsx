@@ -35,6 +35,7 @@ export const ImageCarouselEditor: React.FC = () => {
   const [campaigns, setCampaigns] = useState<{ name: string; data: string }[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<string>("");
   const [selectedView, setSelectedView] = useState<"create" | "importJson" | "importCampaign">("create");
+  const [priority, setPriority] = useState<number | "">("");
   
   const luxuryPageIds = [
     "men-home-page",
@@ -293,6 +294,11 @@ export const ImageCarouselEditor: React.FC = () => {
     setImages(newImages);
   };
 
+  const handlePriorityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPriority(value ? parseInt(value, 10) : "");
+  };
+
   const exportJSON = () => {
     // Check if position is valid
     if (!position.trim()) {
@@ -355,6 +361,7 @@ export const ImageCarouselEditor: React.FC = () => {
       type, 
       position: positionNum,
       pageId: finalPageId,
+      ...(priority !== "" && { priority }),
       aspectRatio: selectedAspectRatio,
       content: images.map((img) => ({ 
         url: img.url,
@@ -562,49 +569,6 @@ export const ImageCarouselEditor: React.FC = () => {
           Import Previously Created Campaigns
         </Button>
       </div>
-
-      {selectedView === "importJson" && showJsonInput && (
-        <div className="flex flex-col mt-4">
-          <textarea
-            value={jsonInput}
-            onChange={(e) => setJsonInput(e.target.value)}
-            placeholder="Paste your JSON string here"
-            rows={5}
-            className="border p-2 mb-2"
-          />
-          <Button
-            variant="outline"
-            onClick={handleImportJSON}
-            disabled={!isJsonValid}
-          >
-            Import JSON
-          </Button>
-        </div>
-      )}
-
-      {selectedView === "importCampaign" && showCampaignSelect && (
-        <div className="flex flex-col mt-4">
-          <h3 className="font-bold">Previously Created Campaigns</h3>
-          <select
-            value={selectedCampaign}
-            onChange={(e) => {
-              const campaign = campaigns.find(c => c.name === e.target.value);
-              if (campaign) {
-                handleImportCampaign(campaign.data);
-              }
-              setSelectedCampaign(e.target.value);
-            }}
-            className="border p-2 mb-2"
-          >
-            <option value="">Select a campaign to import</option>
-            {campaigns.map((campaign, idx) => (
-              <option key={idx} value={campaign.name}>
-                {campaign.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
       
       <TopControls
         type={type}
@@ -624,6 +588,8 @@ export const ImageCarouselEditor: React.FC = () => {
         luxuryPageIds={luxuryPageIds}
         fashionPageIds={fashionPageIds}
         aspectRatioOptions={aspectRatioOptions}
+        priority={priority}
+        onPriorityChange={handlePriorityChange}
       />
 
         <ImageForm
