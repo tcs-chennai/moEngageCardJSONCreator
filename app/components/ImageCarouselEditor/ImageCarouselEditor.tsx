@@ -28,6 +28,7 @@ export const ImageCarouselEditor: React.FC = () => {
   const [pageIdError, setPageIdError] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showJSONPreview, setShowJSONPreview] = useState(false);
   const [jsonInput, setJsonInput] = useState("");
   const [isJsonValid, setIsJsonValid] = useState(false);
   const [showJsonInput, setShowJsonInput] = useState(false);
@@ -39,7 +40,16 @@ export const ImageCarouselEditor: React.FC = () => {
   
   const commonPageIds = [
     "Cart",
-    "Wishlist"
+    "Wishlist",
+    "CLP",
+    "PLP",
+    "PDP",
+    "Checkout",
+    "Account",
+    "CliQ Cash page",
+    "Order History Page",
+    "Search Home Page",
+    "Order Confirmation Page"
   ]
   const luxuryPageIds = commonPageIds.concat([
     "men-home-page",
@@ -67,7 +77,8 @@ export const ImageCarouselEditor: React.FC = () => {
     "westside/c-mbh11a00004",
     "home-homepage",
     "accessories-homepage",
-    "kids-homepage"
+    "kids-homepage",
+    "Category",
   ]);
 
   const aspectRatioOptions = [
@@ -392,6 +403,7 @@ export const ImageCarouselEditor: React.FC = () => {
 
     setJsonOutput(jsonOutput);
     setHasChanges(false);
+    setShowJSONPreview(true);
     console.log(jsonOutput);
   };
 
@@ -738,14 +750,14 @@ export const ImageCarouselEditor: React.FC = () => {
         </div>
       </div>
 
-      {jsonOutput && !hasChanges && (
-        <JsonOutput
-          jsonOutput={jsonOutput}
-          onCopy={async () => {
-            await navigator.clipboard.writeText(jsonOutput);
-          }}
-        />
-      )}
+      <Dialog open={showJSONPreview} onOpenChange={setShowJSONPreview}>
+  <DialogContent className="max-w-[500px] h-[90vh] p-2 bg-[#f5f5f5] flex flex-col">
+    {/* Ensure DialogContent takes up space properly */}
+    <JsonOutput jsonOutput={jsonOutput} onCopy={async () => {
+      await navigator.clipboard.writeText(jsonOutput);
+    }} />
+  </DialogContent>
+</Dialog>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-[391px] h-[90vh] p-2 bg-[#f5f5f5]">

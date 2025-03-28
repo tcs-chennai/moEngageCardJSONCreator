@@ -1,5 +1,5 @@
 'use client'
-import React from "react";
+import React, { useState } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,13 @@ export const TopControls: React.FC<TopControlsProps> = ({
   priority,
   onPriorityChange
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter the page IDs based on the search term
+  const filteredPageIds = (category === "luxury" ? luxuryPageIds : fashionPageIds).filter(id =>
+    id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const [customPageIdSuggestions, setCustomPageIdSuggestions] = React.useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('customPageIds');
@@ -52,6 +59,11 @@ export const TopControls: React.FC<TopControlsProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent default behavior of the Select component
+    e.stopPropagation();
+  };
+
   return (
     <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:gap-4 sm:items-start">
       <div className="w-full sm:w-auto">
@@ -75,7 +87,7 @@ export const TopControls: React.FC<TopControlsProps> = ({
             min="0"
             value={position}
             onChange={onPositionChange}
-            className={positionError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+            className={(positionError || isNaN(parseInt(position, 10))) ? 'border-red-500 focus-visible:ring-red-500' : ''}
             required
           />
         </div>
@@ -98,11 +110,20 @@ export const TopControls: React.FC<TopControlsProps> = ({
       <div className="w-full sm:w-auto">
         <Label htmlFor="pageId">Page ID *</Label>
         <Select onValueChange={onPageIdChange} value={pageId}>
-          <SelectTrigger className={`w-full ${pageIdError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}>
+          <SelectTrigger className={`w-full ${(pageIdError || pageId == '') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}>
             {pageId === "other" ? "Other" : pageId || "Select Page ID *"}
           </SelectTrigger>
           <SelectContent>
-            {(category === "luxury" ? luxuryPageIds : fashionPageIds).map((id) => (
+          <div className="p-2">
+              <Input
+                placeholder="Search Page ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown} 
+                className="mb-2"
+              />
+            </div>
+            {filteredPageIds.map((id) => (
               <SelectItem key={id} value={id}>
                 {id}
               </SelectItem>
@@ -119,7 +140,7 @@ export const TopControls: React.FC<TopControlsProps> = ({
               value={customPageId}
               onChange={onCustomPageIdChange}
               onBlur={handleCustomPageIdBlur}
-              className={pageIdError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              className={(pageIdError || customPageId== '') ? 'border-red-500 focus-visible:ring-red-500' : ''}
               required
             />
             <datalist id="customPageIdSuggestions">
@@ -149,10 +170,10 @@ export const TopControls: React.FC<TopControlsProps> = ({
       </div>
 
       <div className="w-full sm:w-auto">
-        <Label htmlFor="priority">Priority (optional)</Label>
+        <Label htmlFor="priority">Priority (optional) (0 or positive number)</Label>
         <Input
           id="priority"
-          placeholder="Enter priority (0 or positive number)"
+          placeholder="Enter priority"
           type="number"
           min="0"
           value={priority}

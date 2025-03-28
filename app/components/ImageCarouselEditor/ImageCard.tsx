@@ -38,7 +38,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
             ⋮⋮
           </div>
         </div>
-        <div className="relative w-full h-[200px]">
+        <div className="relative w-full h-[150px]">
           <Image
             src={img.url}
             alt={`Image ${idx}`}
