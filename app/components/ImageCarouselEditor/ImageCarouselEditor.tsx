@@ -37,7 +37,11 @@ export const ImageCarouselEditor: React.FC = () => {
   const [selectedView, setSelectedView] = useState<"create" | "importJson" | "importCampaign">("create");
   const [priority, setPriority] = useState<number | "">("");
   
-  const luxuryPageIds = [
+  const commonPageIds = [
+    "Cart",
+    "Wishlist"
+  ]
+  const luxuryPageIds = commonPageIds.concat([
     "men-home-page",
     "women-home-page",
     "the-watch-store",
@@ -47,10 +51,15 @@ export const ImageCarouselEditor: React.FC = () => {
     "indiluxe",
     "lifestyle-home-page",
     "kids-clp",
-    "the-collective"
-  ];
+    "the-collective",
+    "footwear-microsite",
+    "hybrid-plp-menswatches",
+    "bvlgari"
+  ]);
 
-  const fashionPageIds = [
+  const fashionPageIds = commonPageIds.concat([
+    "Checkout",
+    "Search",
     "beauty-homepage",
     "women-homepage",
     "footwear-homepage",
@@ -59,7 +68,7 @@ export const ImageCarouselEditor: React.FC = () => {
     "home-homepage",
     "accessories-homepage",
     "kids-homepage"
-  ];
+  ]);
 
   const aspectRatioOptions = [
     { value: "3:1", label: "3:1" },
@@ -478,32 +487,52 @@ export const ImageCarouselEditor: React.FC = () => {
 
   const handleImportJSON = () => {
     try {
-      // Parse the JSON string from the input
-      const jsonData = JSON.parse(JSON.parse(jsonInput.trim()));
-      console.log(jsonData);
-      // Populate the form with the imported data
-      setType(jsonData.type);
-      setPosition(jsonData.position.toString());
-      setPageId(jsonData.pageId);
-      setSelectedAspectRatio(jsonData.aspectRatio);
-      setImages(jsonData.content.map((img: any) => ({
-        url: img.url,
-        caption: img.caption,
-        link: img.link,
-        bannerId: img.bannerId,
-        aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
-        displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
-      })));
-      setHasChanges(true);
-      toast.success("JSON string imported successfully");
+        let jsonData;
 
-      // Hide the JSON input field and button after successful import
-      setShowJsonInput(false);
-      setJsonInput(""); // Clear the input field
+        try {
+            // First attempt at parsing JSON
+            jsonData = JSON.parse(JSON.parse(jsonInput.trim()));
+        } catch (error1) {
+            try {
+                // If first parsing fails, attempt a second-level parsing
+                jsonData = JSON.parse(jsonInput.trim());
+            } catch (error2) {
+                throw new Error("Invalid JSON format"); // Rethrow if both fail
+            }
+        }
+
+        console.log(jsonData);
+
+        // Ensure jsonData.content is an array before mapping
+        if (!Array.isArray(jsonData.content)) {
+            throw new Error("Invalid content format");
+        }
+
+        // Populate the form with the imported data
+        setType(jsonData.type);
+        setPosition(jsonData.position?.toString() || "");
+        setPageId(jsonData.pageId);
+        setSelectedAspectRatio(jsonData.aspectRatio);
+        setImages(jsonData.content.map((img: any) => ({
+            url: img.url,
+            caption: img.caption,
+            link: img.link,
+            bannerId: img.bannerId,
+            aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
+            displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
+        })));
+
+        setHasChanges(true);
+        toast.success("JSON string imported successfully");
+
+        // Hide the JSON input field and button after successful import
+        setShowJsonInput(false);
+        setJsonInput(""); // Clear the input field
     } catch (error) {
-      toast.error("Failed to import JSON string. Please check the format.");
+        console.error("JSON Import Error:", error);
+        toast.error("Failed to import JSON string. Please check the format.");
     }
-  };
+};
 
   // Effect to validate JSON input
   useEffect(() => {
