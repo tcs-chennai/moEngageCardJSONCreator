@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ImageItem, AspectRatioOption } from "./types";
 import { ImageCard } from "./ImageCard";
@@ -633,24 +634,29 @@ export const ImageCarouselEditor: React.FC = () => {
       {selectedView === "importCampaign" && showCampaignSelect && (
         <div className="flex flex-col mt-4">
           <h3 className="font-bold">Previously Created Campaigns</h3>
-          <select
-            value={selectedCampaign}
-            onChange={(e) => {
-              const campaign = campaigns.find(c => c.name === e.target.value);
+          <Select onValueChange={(value) => {
+            if (value !== "placeholder") {
+              const campaign = campaigns.find(c => c.name === value);
               if (campaign) {
                 handleImportCampaign(campaign.data);
               }
-              setSelectedCampaign(e.target.value);
-            }}
-            className="border p-2 mb-2"
-          >
-            <option value="">Select a campaign to import</option>
-            {campaigns.map((campaign, idx) => (
-              <option key={idx} value={campaign.name}>
-                {campaign.name}
-              </option>
-            ))}
-          </select>
+              setSelectedCampaign(value);
+            } else {
+              setSelectedCampaign("");
+            }
+          }} value={selectedCampaign}>
+            <SelectTrigger className="border p-2 mb-2">
+              {selectedCampaign || "Select a campaign to import"}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="placeholder" disabled>Select a campaign to import</SelectItem>
+              {campaigns.map((campaign, idx) => (
+                <SelectItem key={idx} value={campaign.name}>
+                  {campaign.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       
