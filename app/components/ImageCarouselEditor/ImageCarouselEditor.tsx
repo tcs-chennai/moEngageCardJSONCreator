@@ -408,29 +408,6 @@ export const ImageCarouselEditor: React.FC = () => {
     console.log(jsonOutput);
   };
 
-  const handleImportCampaign = (campaignData: string) => {
-    try {
-      const jsonData = JSON.parse(campaignData);
-      // Populate the form with the imported data
-      setType(jsonData.type);
-      setPosition(jsonData.position.toString());
-      setPageId(jsonData.pageId);
-      setSelectedAspectRatio(jsonData.aspectRatio);
-      setImages(jsonData.content.map((img: any) => ({
-        url: img.url,
-        caption: img.caption,
-        link: img.link,
-        bannerId: img.bannerId,
-        aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
-        displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
-      })));
-      setHasChanges(true);
-      toast.success("Campaign imported successfully");
-    } catch (error) {
-      toast.error("Failed to import campaign. Please check the format.");
-    }
-  };
-
   const isFormValid = () => {
     const finalPageId = pageId === "other" ? customPageId.trim() : pageId;
     const hasDuplicateBannerIds = images.some((img, idx) => 
@@ -498,54 +475,59 @@ export const ImageCarouselEditor: React.FC = () => {
     setHasChanges(true);
   };
 
-  const handleImportJSON = () => {
-    try {
-        let jsonData;
-
+  const handleImportJSON = async (data: String) => {
+      let jsonData;
+      try {
+        // First attempt at parsing JSON
+        jsonData = JSON.parse(JSON.parse(data.trim()));
+      } catch (error1) {
         try {
-            // First attempt at parsing JSON
-            jsonData = JSON.parse(JSON.parse(jsonInput.trim()));
-        } catch (error1) {
-            try {
-                // If first parsing fails, attempt a second-level parsing
-                jsonData = JSON.parse(jsonInput.trim());
-            } catch (error2) {
-                throw new Error("Invalid JSON format"); // Rethrow if both fail
-            }
+          // If first parsing fails, attempt a second-level parsing
+          jsonData = JSON.parse(data.trim());
+        } catch (error2) {
+          throw new Error("Invalid JSON format"); // Rethrow if both fail
         }
+      }
 
-        console.log(jsonData);
+      // Ensure jsonData.content is an array before mapping
+      if (!Array.isArray(jsonData.content)) {
+        throw new Error("Invalid content format");
+      }
 
-        // Ensure jsonData.content is an array before mapping
-        if (!Array.isArray(jsonData.content)) {
-            throw new Error("Invalid content format");
-        }
+      // Populate the form with the imported data
+      setType(jsonData.type);
+      setPosition(jsonData.position?.toString() || "");
+      setPageId(jsonData.pageId);
+      setSelectedAspectRatio(jsonData.aspectRatio);
 
-        // Populate the form with the imported data
-        setType(jsonData.type);
-        setPosition(jsonData.position?.toString() || "");
-        setPageId(jsonData.pageId);
-        setSelectedAspectRatio(jsonData.aspectRatio);
-        setImages(jsonData.content.map((img: any) => ({
-            url: img.url,
-            caption: img.caption,
-            link: img.link,
-            bannerId: img.bannerId,
-            aspectRatio: jsonData.aspectRatio, // Assuming aspect ratio is the same for all
-            displayAspectRatio: img.displayAspectRatio || jsonData.aspectRatio // Use existing or default
-        })));
+      // Load images and calculate displayAspectRatio
+      const newImages = await Promise.all(jsonData.content.map(async (img: any) => {
+        const image = new Image();
+        image.src = img.url;
 
-        setHasChanges(true);
-        toast.success("JSON string imported successfully");
+        return new Promise<ImageItem>((resolve) => {
+          image.onload = () => {
+            const aspectRatio = calculateAspectRatio(image.width, image.height);
+            resolve({
+              url: img.url,
+              caption: img.caption,
+              link: img.link,
+              bannerId: img.bannerId,
+              aspectRatio: jsonData.aspectRatio, // Ensure aspect ratio is set
+              displayAspectRatio: aspectRatio // Calculate display aspect ratio
+            });
+          };
+        });
+      }));
 
-        // Hide the JSON input field and button after successful import
-        setShowJsonInput(false);
-        setJsonInput(""); // Clear the input field
-    } catch (error) {
-        console.error("JSON Import Error:", error);
-        toast.error("Failed to import JSON string. Please check the format.");
-    }
-};
+      setImages(newImages);
+      setHasChanges(true);
+      toast.success("JSON string imported successfully");
+
+      // Hide the JSON input field and button after successful import
+      setShowJsonInput(false);
+      setJsonInput(""); // Clear the input field
+  };
 
   // Effect to validate JSON input
   useEffect(() => {
@@ -623,7 +605,7 @@ export const ImageCarouselEditor: React.FC = () => {
           />
           <Button
             variant="outline"
-            onClick={handleImportJSON}
+            onClick={() => handleImportJSON(jsonInput)}
             disabled={!isJsonValid}
           >
             Import JSON
@@ -638,7 +620,7 @@ export const ImageCarouselEditor: React.FC = () => {
             if (value !== "placeholder") {
               const campaign = campaigns.find(c => c.name === value);
               if (campaign) {
-                handleImportCampaign(campaign.data);
+                handleImportJSON(campaign.data);
               }
               setSelectedCampaign(value);
             } else {
