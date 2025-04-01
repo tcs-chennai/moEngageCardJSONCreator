@@ -100,7 +100,7 @@ export const MobilePreview: React.FC<MobilePreviewProps> = ({ images, type }) =>
                   src={image.url}
                   alt={`Slide ${index}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="375px"
                 />
                 {image.caption && (
