@@ -1,6 +1,6 @@
 # moEngageCardJSONCreator
 
-[![Tests](https://github.com/hemantsingh-tul-ios/moEngageCardJSONCreator/actions/workflows/test.yml/badge.svg)](https://github.com/hemantsingh-tul-ios/moEngageCardJSONCreator/actions/workflows/test.yml)
+[![Tests](https://github.com/tcs-chennai/moEngageCardJSONCreator/actions/workflows/test.yml/badge.svg)](https://github.com/tcs-chennai/moEngageCardJSONCreator/actions/workflows/test.yml)
 [![Deploy Status](https://img.shields.io/badge/Deploy-GitHub%20Pages-blue?logo=github)](https://hemantsingh-tul-ios.github.io/moEngageCardJSONCreator)
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
