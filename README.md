@@ -1,7 +1,7 @@
 # moEngageCardJSONCreator
 
 [![Tests](https://github.com/tcs-chennai/moEngageCardJSONCreator/actions/workflows/test.yml/badge.svg)](https://github.com/tcs-chennai/moEngageCardJSONCreator/actions/workflows/test.yml)
-[![Deploy Status](https://img.shields.io/badge/Deploy-GitHub%20Pages-blue?logo=github)](https://hemantsingh-tul-ios.github.io/moEngageCardJSONCreator)
+[![Deploy Status](https://img.shields.io/badge/Deploy-GitHub%20Pages-blue?logo=github)](https://tcs-chennai.github.io/moEngageCardJSONCreator)
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
@@ -28,7 +28,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Deployment
 
 This project is deployed on GitHub Pages. The site is available at:
-[https://hemantsingh-tul-ios.github.io/moEngageCardJSONCreator](https://hemantsingh-tul-ios.github.io/moEngageCardJSONCreator)
+[https://tcs-chennai.github.io/moEngageCardJSONCreator](https://tcs-chennai.github.io/moEngageCardJSONCreator)
 
 To deploy locally:
 ```bash
