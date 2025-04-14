@@ -123,12 +123,12 @@ export const TopControls: React.FC<TopControlsProps> = ({
                 className="mb-2"
               />
             </div>
+            <SelectItem value="other">Other</SelectItem>
             {filteredPageIds.map((id) => (
               <SelectItem key={id} value={id}>
                 {id}
               </SelectItem>
             ))}
-            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
         {pageId === "other" && (

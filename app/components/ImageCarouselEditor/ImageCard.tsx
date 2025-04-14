@@ -94,14 +94,12 @@ export const ImageCard: React.FC<ImageCardProps> = ({
           />
         </div>
         <div className="w-full space-y-1.5 mt-2">
-          {img.link && <Label htmlFor={`link-${idx}`}>Redirection Link *</Label>}
+          {img.link && <Label htmlFor={`link-${idx}`}>Redirection Link</Label>}
           <Input
             id={`link-${idx}`}
-            placeholder="Redirection Link *"
+            placeholder="Redirection Link"
             value={img.link}
             onChange={(e) => onUpdateLink(idx, e.target.value)}
-            className={`${!img.link.trim() || !isValidUrl(img.link.trim()) ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-            required
           />
           {img.link.trim() && isValidUrl(img.link.trim()) && (
             <Button 

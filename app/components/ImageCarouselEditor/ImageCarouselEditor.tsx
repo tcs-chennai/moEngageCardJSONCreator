@@ -65,12 +65,26 @@ export const ImageCarouselEditor: React.FC = () => {
     "the-collective",
     "footwear-microsite",
     "hybrid-plp-menswatches",
-    "bvlgari"
+    "bvlgari",
+    "LSH10",
+    "LSH11",
+    "LSH12",
+    "LSH13",
+    "LSH14",
+    "LSH15",
+    "LSH16",
+    "LSH17",
+    "LSH18",
+    "LSH19",
+    "LSH21",
+    "LSH22",
+    "LSH28",
+    "LSH29",
+    "LSH30",
+    "LSH31"
   ]);
 
   const fashionPageIds = commonPageIds.concat([
-    "Checkout",
-    "Search",
     "beauty-homepage",
     "women-homepage",
     "footwear-homepage",
@@ -80,6 +94,22 @@ export const ImageCarouselEditor: React.FC = () => {
     "accessories-homepage",
     "kids-homepage",
     "Category",
+    "MSH13",
+    "MSH11",
+    "MSH10",
+    "MSH12",
+    "MSH21",
+    "MSH22",
+    "MSH20",
+    "MSH16",
+    "MSH25",
+    "MSH30",
+    "MSH23",
+    "MSH15",
+    "MSH26",
+    "MSH24",
+    "MSH28",
+    "MSH27"
   ]);
 
   const aspectRatioOptions = [
@@ -350,7 +380,7 @@ export const ImageCarouselEditor: React.FC = () => {
         img.bannerId.trim() !== ""
       )
     );
-    const hasInvalidLinks = images.some(img => !isValidUrl(img.link.trim()));
+    const hasInvalidLinks = images.some(img => img.link.trim() !== "" && !isValidUrl(img.link.trim()));
     const hasInvalidImages = images.some(img => !isValidUrl(img.url));
 
     if (hasMissingBannerIds) {
@@ -360,11 +390,6 @@ export const ImageCarouselEditor: React.FC = () => {
 
     if (hasDuplicateBannerIds) {
       toast.error("Each image must have a unique Banner ID");
-      return;
-    }
-
-    if (hasMissingLinks) {
-      toast.error("Please add redirection links to all images before exporting");
       return;
     }
 
@@ -422,9 +447,7 @@ export const ImageCarouselEditor: React.FC = () => {
            finalPageId &&
            images.length > 0 && 
            !images.some(img => 
-             !img.link.trim() || 
              !img.bannerId.trim() ||
-             !isValidUrl(img.link.trim()) || 
              !isValidUrl(img.url)
            ) &&
            !hasDuplicateBannerIds;
